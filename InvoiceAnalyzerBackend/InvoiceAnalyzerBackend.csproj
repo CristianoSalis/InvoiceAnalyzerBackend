@@ -1,0 +1,70 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="obj\Debug\net9.0\.NETCoreApp,Version=v9.0.AssemblyAttributes.cs" />
+    <Compile Include="obj\Debug\net9.0\InvoiceAnalyzerBackend.AssemblyInfo.cs" />
+    <Compile Include="obj\Debug\net9.0\InvoiceAnalyzerBackend.GlobalUsings.g.cs" />
+    <Compile Include="obj\Debug\net9.0\InvoiceAnalyzerBackend.MvcApplicationPartsAssemblyInfo.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="obj\Debug\net9.0\InvoiceAnalyzerBackend.csproj.FileListAbsolute.txt" />
+    <Content Include="obj\Debug\net9.0\rjsmcshtml.dswa.cache.json" />
+    <Content Include="obj\Debug\net9.0\rjsmrazor.dswa.cache.json" />
+    <Content Include="obj\Debug\net9.0\rpswa.dswa.cache.json" />
+    <Content Include="obj\Debug\net9.0\staticwebassets.build.endpoints.json" />
+    <Content Include="obj\Debug\net9.0\staticwebassets.build.json" />
+    <Content Include="obj\Debug\net9.0\staticwebassets.development.json" />
+    <Content Include="obj\Debug\net9.0\staticwebassets.references.upToDateCheck.txt" />
+    <Content Include="obj\Debug\net9.0\staticwebassets.removed.txt" />
+    <Content Include="obj\InvoiceAnalyzerBackend.csproj.nuget.dgspec.json" />
+    <Content Include="obj\project.assets.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="obj\Debug\net9.0\apphost.exe" />
+    <None Include="obj\Debug\net9.0\InvoiceA.B272680E.Up2Date" />
+    <None Include="obj\Debug\net9.0\InvoiceAnalyzerBackend.AssemblyInfoInputs.cache" />
+    <None Include="obj\Debug\net9.0\InvoiceAnalyzerBackend.assets.cache" />
+    <None Include="obj\Debug\net9.0\InvoiceAnalyzerBackend.csproj.AssemblyReference.cache" />
+    <None Include="obj\Debug\net9.0\InvoiceAnalyzerBackend.csproj.BuildWithSkipAnalyzers" />
+    <None Include="obj\Debug\net9.0\InvoiceAnalyzerBackend.csproj.CoreCompileInputs.cache" />
+    <None Include="obj\Debug\net9.0\InvoiceAnalyzerBackend.dll" />
+    <None Include="obj\Debug\net9.0\InvoiceAnalyzerBackend.GeneratedMSBuildEditorConfig.editorconfig" />
+    <None Include="obj\Debug\net9.0\InvoiceAnalyzerBackend.genruntimeconfig.cache" />
+    <None Include="obj\Debug\net9.0\InvoiceAnalyzerBackend.MvcApplicationPartsAssemblyInfo.cache" />
+    <None Include="obj\Debug\net9.0\InvoiceAnalyzerBackend.pdb" />
+    <None Include="obj\Debug\net9.0\refint\InvoiceAnalyzerBackend.dll" />
+    <None Include="obj\Debug\net9.0\ref\InvoiceAnalyzerBackend.dll" />
+    <None Include="obj\Debug\net9.0\staticwebassets.build.json.cache" />
+    <None Include="obj\InvoiceAnalyzerBackend.csproj.nuget.g.props" />
+    <None Include="obj\InvoiceAnalyzerBackend.csproj.nuget.g.targets" />
+    <None Include="obj\project.nuget.cache" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.20" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.12">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Data\" />
+    <Folder Include="HostedServices\" />
+    <Folder Include="Models\" />
+    <Folder Include="obj\Debug\net9.0\staticwebassets\" />
+    <Folder Include="samples\" />
+    <Folder Include="Services\" />
+    <Folder Include="wwwroot\uploads\" />
+  </ItemGroup>
+
+</Project>

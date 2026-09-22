@@ -1,0 +1,67 @@
+# Visual Studio / IDE
+.vs/
+.vscode/
+.idea/
+
+# Build outputs
+bin/
+obj/
+**/bin/
+**/obj/
+
+# User files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Logs
+*.log
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# NuGet
+*.nupkg
+packages/
+
+# EF / Migrations
+# keep Migrations source under version control, do not ignore Migrations/
+
+# Local DB / SQLite (ignore local DB file(s))
+**/Data/*.db
+*.sqlite
+*.sqlite3
+*.db
+
+# Uploaded files (dev runtime)
+wwwroot/uploads/
+**/uploads/
+
+# Node / frontend
+node_modules/
+client/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Vite / builds
+client/dist/
+client/build/
+dist/
+
+# Environment / secrets
+.env
+.env.*.local
+secrets.json
+
+# Generated archives / tools
+*.zip
+*.tar.gz
+
+# JetBrains Rider caches
+.idea/
+*.iml
