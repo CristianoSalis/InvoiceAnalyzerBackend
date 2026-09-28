@@ -1,19 +1,34 @@
-﻿using System;
-using System.IO;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using InvoiceAnalyzerBackend.Data;
+﻿using InvoiceAnalyzerBackend.Data;
 using InvoiceAnalyzerBackend.Models;
 using InvoiceAnalyzerBackend.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using System;
+using System.IO;
+using System.Linq;
+using System.Reflection.PortableExecutable;
+using System.Runtime.ConstrainedExecution;
+using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
+using static System.Net.WebRequestMethods;
 
 namespace InvoiceAnalyzerBackend.Controllers
 {
+
+
+    /// <summary>
+    /// InvoicesController è il controller API REST che espone gli endpoint per gestire le fatture.Riceve le richieste HTTP dal client e risponde con i dati elaborati.
+    ///N.B. alcune best practice utilizzate:
+    /// AsNoTracking(): query di sola lettura (più veloce, no tracking)
+    /// Select() : ritorna solo i campi necessari(non l'intero oggetto)
+    /// CancellationToken: permette di annullare operazioni lunghe
+    /// CreatedAtAction(): ritorna HTTP 201 e location header
+    /// </summary>
+
     [ApiController]
     [Route("api/[controller]")]
     public class InvoicesController : ControllerBase

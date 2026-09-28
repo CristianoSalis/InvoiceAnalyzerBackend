@@ -7,6 +7,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.IO;
 
+
+///<summary>    
+///punto di ingresso dell'applicazione ASP.NET Core. Configura i servizi, il database, i middleware e avvia il server.
+/// </summary>
 var builder = WebApplication.CreateBuilder(args);
 
 // DbContext: SQLite file in Data/invoices.db
@@ -17,24 +21,7 @@ var sqliteConn = $"Data Source={Path.Combine(dataDir, "invoices.db")}";
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(sqliteConn));
 
-// Add services
 builder.Services.AddControllers();
-
-//builder.Services.AddSingleton<InvoiceAnalyzerBackend.Services.IOcrService, InvoiceAnalyzerBackend.Services.MockOcrService>();
-//// OCR service (Mock / PdfPig-based)
-//builder.Services.AddSingleton<InvoiceAnalyzerBackend.Services.IOcrService, InvoiceAnalyzerBackend.Services.MockOcrService>();
-
-//// Analyzer: rule-based
-//builder.Services.AddScoped<InvoiceAnalyzerBackend.Services.IAnalyzerService, InvoiceAnalyzerBackend.Services.AnalyzerService>();
-
-//// Hosted background processor
-//builder.Services.AddHostedService<InvoiceAnalyzerBackend.HostedServices.JobProcessorHostedService>();
-
-//builder.Services.AddSingleton<IOcrService, MockOcrService>();
-
-//builder.Services.AddScoped<IAnalyzerService, AnalyzerService>();
-
-//builder.Services.AddHostedService<JobProcessorHostedService>();
 
 // OCR service (Mock / PdfPig-based)
 builder.Services.AddSingleton<IOcrService, MockOcrService>();
@@ -44,8 +31,6 @@ builder.Services.AddScoped<IAnalyzerService, AnalyzerService>();
 
 // Hosted background processor
 builder.Services.AddHostedService<JobProcessorHostedService>();
-
-
 
 // Swagger / OpenAPI via Swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -68,6 +53,12 @@ if (app.Environment.IsDevelopment())
 }
 
 // Ensure DB and schema are created at startup
+///<summary>
+///Crea uno scope temporaneo per accedere ai servizi
+///Recupera AppDbContext
+///Chiama EnsureCreated(): crea il database e tutte le tabelle se non esistono
+///Risultato: La tabella Invoices e InvoiceJobs sono pronte al primo avvio.
+///</summary>
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();

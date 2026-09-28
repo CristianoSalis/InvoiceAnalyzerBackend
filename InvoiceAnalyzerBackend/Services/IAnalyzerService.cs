@@ -26,6 +26,8 @@ namespace InvoiceAnalyzerBackend.Services
         public string RawText { get; init; } = string.Empty;
     }
 
+
+
     public interface IAnalyzerService
     {
         /// <summary>

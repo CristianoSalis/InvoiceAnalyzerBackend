@@ -1,13 +1,27 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace InvoiceAnalyzerBackend.Services
 {
+    /// <summary>
+    /// AnalyzerService è il servizio che estrae e valida i dati strutturati dal testo grezzo
+    ///fornito dall'OCR. Usa regex keyword-oriented per trovare campi specifici e applica validazioni 
+    ///logiche per rilevare anomalie.
+    ///FORNITORE: Acme SRL
+    /// NUMERO: FAT/2024/0001
+    /// DATA: 15/09/2024
+    /// TOTALE: 1.500,00 €
+    /// IVA: 300,00 €
+    /// Descrizione: Fornitura materie prime
+    /// 
+    /// </summary>
+
     public class AnalyzerService : IAnalyzerService
     {
         private readonly ILogger<AnalyzerService> _logger;

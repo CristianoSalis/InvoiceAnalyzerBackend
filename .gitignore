@@ -42,15 +42,15 @@ wwwroot/uploads/
 
 # Node / frontend
 node_modules/
-client/node_modules/
+InvoiceAnalyzerFrontEnd/node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
 # Vite / builds
-client/dist/
-client/build/
+InvoiceAnalyzerFrontEnd/dist/
+InvoiceAnalyzerFrontEnd/build/
 dist/
 
 # Environment / secrets
@@ -65,3 +65,14 @@ secrets.json
 # JetBrains Rider caches
 .idea/
 *.iml
+
+
+
+# SQLite local DB files
+InvoiceAnalyzerBackend/Data/*.db
+InvoiceAnalyzerBackend/Data/*.db-shm
+InvoiceAnalyzerBackend/Data/*.db-wal
+
+# Uploads
+InvoiceAnalyzerBackend/wwwroot/uploads/
+

@@ -13,6 +13,26 @@ using Microsoft.Extensions.Logging;
 
 namespace InvoiceAnalyzerBackend.HostedServices
 {
+    /// <summary>
+    /// JobProcessorHostedService è un servizio in background che elabora continuamente le fatture caricate. È il "motore" dell'applicazione che esegue OCR e analisi su ogni fattura in modo asincrono.
+    /// 1. Client carica fattura → POST /invoices/upload
+    ///   ├─ File salvato in wwwroot/uploads
+    ///   ├─ Invoice creato(status: Uploaded)
+    ///   └─ Job creato(status: Pending)
+
+    ///2. JobProcessorHostedService lo nota
+    ///   ├─ Estrae il file
+    ///   ├─ OCR: "Fattura n. 123 - Ditta Rossi - Tot. €500"
+    ///   ├─ Analyzer: InvoiceNumber="123", VendorName="Ditta Rossi", TotalAmount=500
+    ///   └─ Aggiorna Invoice + Job(status: Completed)
+
+    ///3. Client legge risultati
+    ///   └─ GET /invoices/{id
+    ///} → vede i dati estratti
+
+    /// </summary>
+
+
     public class JobProcessorHostedService : BackgroundService
     {
         private readonly ILogger<JobProcessorHostedService> _logger;
@@ -32,6 +52,10 @@ namespace InvoiceAnalyzerBackend.HostedServices
             {
                 try
                 {
+                    /// <summary>
+                    /// BackgroundService ha una lifetime diversa da quella delle normali richieste HTTP. 
+                    /// Crea un nuovo scope per ogni ciclo per evitare problemi di DbContext scaduto.
+                    /// </summary>
                     using var scope = _scopeFactory.CreateScope();
                     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
                     var ocr = scope.ServiceProvider.GetRequiredService<IOcrService>();

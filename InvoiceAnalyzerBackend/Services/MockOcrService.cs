@@ -12,6 +12,14 @@ namespace InvoiceAnalyzerBackend.Services
     {
         private readonly ILogger<MockOcrService> _logger;
 
+
+
+        /// <summary>
+        /// MockOcrService è un'implementazione fittizia (mock) del servizio OCR usata per lo sviluppo e il testing. 
+        /// Simula l'estrazione di testo da file PDF e immagini senza dipendere da servizi OCR reali (come Google Vision o Tesseract).
+        /// </summary>
+        /// <param name="logger"></param>
+
         public MockOcrService(ILogger<MockOcrService> logger)
         {
             _logger = logger;
@@ -78,6 +86,15 @@ namespace InvoiceAnalyzerBackend.Services
             }
         }
 
+
+        /// <summary>
+        /// Nome fornitore: ACME SRL
+        ///Data: 2026-09-01
+        ///Numero: INV-2026-001
+        ///Importi: 1000.00 EUR(base) + 220.00 EUR(IVA) = 1220.00 EUR
+        /// </summary>
+        /// <param name="fileName"></param>
+        /// <returns></returns>
         private static OcrResult CreateImageMock(string? fileName)
         {
             var sample = new StringBuilder();

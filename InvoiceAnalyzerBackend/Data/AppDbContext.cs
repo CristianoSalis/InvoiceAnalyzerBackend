@@ -5,6 +5,13 @@ using System.Reflection.Emit;
 
 namespace InvoiceAnalyzerBackend.Data
 {
+
+    /// <summary>
+    /// AppDbContext è il context di Entity Framework Core che gestisce la comunicazione tra
+    /// l'applicazione e il database. Funge da intermediario (ORM - Object-Relational Mapping) per leggere e scrivere i dati.
+    /// Questa classe configura il database: dice a Entity Framework quali tabelle esistono, quali sono le loro colonne,    
+    /// come sono collegate, quali indici creare, e quali regole applicare (come le eliminazioni in cascata).
+    /// </summary>
     public class AppDbContext : DbContext
     {
         public AppDbContext(DbContextOptions<AppDbContext> options)
