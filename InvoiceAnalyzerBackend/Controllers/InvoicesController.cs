@@ -1,80 +1,72 @@
-﻿using InvoiceAnalyzerBackend.Data;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using InvoiceAnalyzerBackend.Data;
 using InvoiceAnalyzerBackend.Models;
-using InvoiceAnalyzerBackend.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using System;
-using System.IO;
-using System.Linq;
-using System.Reflection.PortableExecutable;
-using System.Runtime.ConstrainedExecution;
-using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
-using static System.Net.WebRequestMethods;
 
 namespace InvoiceAnalyzerBackend.Controllers
 {
-
-
     /// <summary>
-    /// InvoicesController è il controller API REST che espone gli endpoint per gestire le fatture.Riceve le richieste HTTP dal client e risponde con i dati elaborati.
-    ///N.B. alcune best practice utilizzate:
-    /// AsNoTracking(): query di sola lettura (più veloce, no tracking)
-    /// Select() : ritorna solo i campi necessari(non l'intero oggetto)
-    /// CancellationToken: permette di annullare operazioni lunghe
-    /// CreatedAtAction(): ritorna HTTP 201 e location header
+    /// Controller API REST per la gestione delle fatture e dei relativi job di elaborazione.
     /// </summary>
-
     [ApiController]
     [Route("api/[controller]")]
     public class InvoicesController : ControllerBase
     {
         private readonly AppDbContext _db;
-        private readonly IOcrService _ocr;
-        private readonly IAnalyzerService _analyzer;
         private readonly ILogger<InvoicesController> _logger;
         private readonly IHostEnvironment _env;
 
         public InvoicesController(
             AppDbContext db,
-            IOcrService ocr,
-            IAnalyzerService analyzer,
             ILogger<InvoicesController> logger,
             IHostEnvironment env)
         {
             _db = db;
-            _ocr = ocr;
-            _analyzer = analyzer;
             _logger = logger;
             _env = env;
         }
 
-        // POST api/invoices/upload
-        // multipart/form-data: file
+        /// <summary>
+        /// Carica un file PDF di una fattura e avvia un job di analisi in background.
+        /// </summary>
         [HttpPost("upload")]
+        [Consumes("multipart/form-data")]
         [RequestSizeLimit(50_000_000)]
         public async Task<IActionResult> Upload(IFormFile file, CancellationToken cancellationToken)
         {
             if (file == null || file.Length == 0)
-                return BadRequest(new { error = "No file provided" });
+                return BadRequest(new { error = "Nessun file fornito." });
 
-            // ensure upload folder exists
+            // Validazione estensione file (supporto PDF e HTML di test)
+            var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+            var allowedExtensions = new[] { ".pdf", ".html", ".htm" };
+            if (!allowedExtensions.Contains(ext))
+            {
+                return BadRequest(new { error = "Formato file non supportato. Caricare un PDF o HTML." });
+            }
+
+            // Assicura l'esistenza della cartella uploads
             var uploadsDir = Path.Combine(_env.ContentRootPath, "wwwroot", "uploads");
             Directory.CreateDirectory(uploadsDir);
 
-            var uniqueName = $"{Guid.NewGuid():N}_{Path.GetFileName(file.FileName)}";
-            var filePath = Path.Combine(uploadsDir, uniqueName);
+            var uniqueFileName = $"{Guid.NewGuid():N}_{Path.GetFileName(file.FileName)}";
+            var filePath = Path.Combine(uploadsDir, uniqueFileName);
 
             await using (var fs = System.IO.File.Create(filePath))
             {
                 await file.CopyToAsync(fs, cancellationToken);
             }
 
-            // create invoice record minimal
+            // Crea il record Invoice
             var invoice = new Invoice
             {
                 FilePath = filePath,
@@ -84,7 +76,7 @@ namespace InvoiceAnalyzerBackend.Controllers
 
             await _db.Invoices.AddAsync(invoice, cancellationToken);
 
-            // create job
+            // Crea il Job in stato Pending per il Background Processor
             var job = new InvoiceJob
             {
                 Invoice = invoice,
@@ -96,6 +88,8 @@ namespace InvoiceAnalyzerBackend.Controllers
             await _db.InvoiceJobs.AddAsync(job, cancellationToken);
             await _db.SaveChangesAsync(cancellationToken);
 
+            _logger.LogInformation("Caricata fattura ID {InvoiceId} con Job ID {JobId}", invoice.Id, job.Id);
+
             var result = new
             {
                 invoiceId = invoice.Id,
@@ -105,7 +99,9 @@ namespace InvoiceAnalyzerBackend.Controllers
             return CreatedAtAction(nameof(GetInvoice), new { id = invoice.Id }, result);
         }
 
-        // GET api/invoices/jobs/{jobId}
+        /// <summary>
+        /// Recupera lo stato di avanzamento di un Job di analisi.
+        /// </summary>
         [HttpGet("jobs/{jobId:guid}")]
         public async Task<IActionResult> GetJobStatus(Guid jobId, CancellationToken cancellationToken)
         {
@@ -129,9 +125,16 @@ namespace InvoiceAnalyzerBackend.Controllers
             return Ok(job);
         }
 
-        // GET api/invoices
+        /// <summary>
+        /// Recupera la lista paginata e filtrabile delle fatture.
+        /// </summary>
         [HttpGet]
-        public async Task<IActionResult> List([FromQuery] string? vendor, [FromQuery] string? status, [FromQuery] int page = 1, [FromQuery] int pageSize = 20, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> List(
+            [FromQuery] string? vendor,
+            [FromQuery] string? status,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 20,
+            CancellationToken cancellationToken = default)
         {
             var q = _db.Invoices.AsNoTracking().OrderByDescending(i => i.UploadedAt).AsQueryable();
 
@@ -158,7 +161,9 @@ namespace InvoiceAnalyzerBackend.Controllers
             return Ok(new { total, page, pageSize, items });
         }
 
-        // GET api/invoices/{id}
+        /// <summary>
+        /// Dettaglio singolo di una fattura tramite il suo ID.
+        /// </summary>
         [HttpGet("{id:guid}")]
         public async Task<IActionResult> GetInvoice(Guid id, CancellationToken cancellationToken)
         {
@@ -192,15 +197,15 @@ namespace InvoiceAnalyzerBackend.Controllers
             return Ok(invoice);
         }
 
-        // PUT api/invoices/{id}
-        // body: corrected fields and optional action
+        /// <summary>
+        /// Aggiorna o approva/rifiuta i dati estrapolati di una fattura.
+        /// </summary>
         [HttpPut("{id:guid}")]
         public async Task<IActionResult> UpdateInvoice(Guid id, [FromBody] UpdateInvoiceRequest request, CancellationToken cancellationToken)
         {
             var invoice = await _db.Invoices.FindAsync(new object[] { id }, cancellationToken);
             if (invoice == null) return NotFound();
 
-            // Apply corrections if provided
             if (request.InvoiceNumber != null) invoice.InvoiceNumber = request.InvoiceNumber;
             if (!string.IsNullOrWhiteSpace(request.VendorName)) invoice.VendorName = request.VendorName;
             if (!string.IsNullOrWhiteSpace(request.VendorVat)) invoice.VendorVat = request.VendorVat;
@@ -215,7 +220,6 @@ namespace InvoiceAnalyzerBackend.Controllers
                     invoice.IssuedDate = dt;
             }
 
-            // handle actions: "approve" or "reject"
             if (!string.IsNullOrWhiteSpace(request.Action))
             {
                 var action = request.Action.Trim().ToLowerInvariant();
@@ -238,18 +242,17 @@ namespace InvoiceAnalyzerBackend.Controllers
             return NoContent();
         }
 
-        // Small DTOs used by controller
         public class UpdateInvoiceRequest
         {
             public string? InvoiceNumber { get; set; }
-            public string? IssuedDate { get; set; } // allow flexible formats
+            public string? IssuedDate { get; set; }
             public string? VendorName { get; set; }
             public string? VendorVat { get; set; }
             public string? CustomerName { get; set; }
             public decimal? TotalAmount { get; set; }
             public decimal? TaxAmount { get; set; }
             public string? SuggestedCategory { get; set; }
-            public string? Action { get; set; } // "approve" or "reject"
+            public string? Action { get; set; }
         }
     }
 }

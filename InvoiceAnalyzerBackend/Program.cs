@@ -1,19 +1,17 @@
+using System;
+using System.IO;
 using InvoiceAnalyzerBackend.Data;
 using InvoiceAnalyzerBackend.HostedServices;
 using InvoiceAnalyzerBackend.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using System.IO;
 
-
-///<summary>    
-///punto di ingresso dell'applicazione ASP.NET Core. Configura i servizi, il database, i middleware e avvia il server.
-/// </summary>
 var builder = WebApplication.CreateBuilder(args);
 
-// DbContext: SQLite file in Data/invoices.db
+// 1. Configurazione DbContext SQLite
 var dataDir = Path.Combine(builder.Environment.ContentRootPath, "Data");
 Directory.CreateDirectory(dataDir);
 var sqliteConn = $"Data Source={Path.Combine(dataDir, "invoices.db")}";
@@ -23,20 +21,33 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddControllers();
 
-// OCR service (Mock / PdfPig-based)
-builder.Services.AddSingleton<IOcrService, MockOcrService>();
+// 2. Registrazione Opzioni IA
+builder.Services.Configure<AiOptions>(builder.Configuration.GetSection("Ai"));
 
-// Analyzer: rule-based
+// 3. Registrazione IA Service (HttpAiService o NullAiService)
+var aiEndpoint = builder.Configuration["Ai:Endpoint"];
+
+if (!string.IsNullOrEmpty(aiEndpoint))
+{
+    builder.Services.AddHttpClient<IAiService, HttpAiService>();
+}
+else
+{
+    builder.Services.AddSingleton<IAiService, NullAiService>();
+}
+
+// 4. Registrazione Servizi applicativi
+builder.Services.AddScoped<IOcrService, MockOcrService>();
 builder.Services.AddScoped<IAnalyzerService, AnalyzerService>();
 
-// Hosted background processor
+// 5. Hosted background processor per i job
 builder.Services.AddHostedService<JobProcessorHostedService>();
 
-// Swagger / OpenAPI via Swashbuckle
+// 6. Swagger / OpenAPI
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// CORS per dev client (Vite default)
+// 7. CORS per Client Dev (Vite / React)
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
@@ -47,36 +58,32 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseDeveloperExceptionPage();
-}
-
-// Ensure DB and schema are created at startup
-///<summary>
-///Crea uno scope temporaneo per accedere ai servizi
-///Recupera AppDbContext
-///Chiama EnsureCreated(): crea il database e tutte le tabelle se non esistono
-///Risultato: La tabella Invoices e InvoiceJobs sono pronte al primo avvio.
-///</summary>
+// 8. Inizializzazione Database all'avvio
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.EnsureCreated();
 }
 
-// Configure pipeline
+// 9. Configurazione Middleware Pipeline
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.RoutePrefix = "swagger";
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "InvoiceAnalyzerBackend v1");
+    });
+}
+else
+{
+    app.UseHttpsRedirection();
+}
+
 app.UseCors();
-app.UseHttpsRedirection();
 app.UseAuthorization();
 
-// Swagger UI
-app.UseSwagger();
-app.UseSwaggerUI(c =>
-{
-    c.RoutePrefix = "swagger";
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "InvoiceAnalyzerBackend v1");
-});
-
 app.MapControllers();
+
 app.Run();

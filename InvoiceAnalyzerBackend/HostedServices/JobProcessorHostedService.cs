@@ -117,12 +117,16 @@ namespace InvoiceAnalyzerBackend.HostedServices
                             };
 
                             var ocrResult = await ocr.ExtractAsync(fs, Path.GetFileName(invoice.FilePath), contentType, stoppingToken);
+                            _logger.LogInformation("ocrResult --> Extracted text: {ExtractedText}", ocrResult.Text);
+
                             job.Progress = 40;
                             await db.SaveChangesAsync(stoppingToken);
 
                             invoice.RawText = ocrResult.Text;
 
+                            _logger.LogInformation("ocrResult analysis --> Extracted fields ocrResult.Text: {@ocrResult.Text}", ocrResult.Text);
                             var analysis = await analyzer.AnalyzeAsync(ocrResult.Text, stoppingToken);
+                            _logger.LogInformation("ocrResult analysis --> Extracted fields analysis: {@analysis}", analysis);
                             job.Progress = 80;
 
                             // Aggiorna invoice con campi estratti (se presenti)
